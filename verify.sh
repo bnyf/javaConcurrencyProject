@@ -1,6 +1,6 @@
 #!/bin/sh
 
-javac ticketingsystem/Verify.java -d ./bin
+javac -cp . ticketingsystem/Verify.java
 
-java -cp bin ticketingsystem/Verify > trace 
+java -cp . ticketingsystem/Verify > trace 
 java -jar verify.jar trace
