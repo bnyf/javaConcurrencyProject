@@ -32,7 +32,6 @@ public class Check {
 	final static int coachnum = 10; // coach is arranged from 1 to 5
 	final static int seatnum = 100; // seat is allocated from 1 to 20
 	final static int stationnum = 10; // station is designed from 1 to 5
-	
 	final static int testnum = 100;
 
 	final static int retpc = 30; // return ticket operation is 10% percent
