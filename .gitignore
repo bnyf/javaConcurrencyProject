@@ -2,3 +2,6 @@
 trace
 *.class
 bin
+[v|V]erify*
+[m|M]ytrace*
+[c|C]eck*
