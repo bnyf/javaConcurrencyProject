@@ -7,6 +7,7 @@ public class TicketingDS implements TicketingSystem {
 
 	final private int routenum, coachnum, seatnum, sationnum;
 	private AtomicInteger[][][] seats;
+	// private int[] remainTicketNum;
 	private AtomicLong totTid;
 
 	public TicketingDS(int _routenum, int _coachnum, int _seatnum, int _sationnum, int _threadnum) {
@@ -24,6 +25,7 @@ public class TicketingDS implements TicketingSystem {
 			}
 		}
 		totTid = new AtomicLong(0);
+		// remainTicketNum = new int[routenum];
 	}
 
 	private int hashDistance(int departure, int arrival) {
