@@ -120,8 +120,8 @@ public class Test {
 
 			long t = (long) (threadNums[p] * TEST_NUM / (double) time) * 1000; // 1000是从ms转换为s
 			System.out.println(String.format(
-					"ThreadNum: %d BuyAvgTime(ns): %d RefundAvgTime(ns): %d InquiryAvgTime(ns): %d ThroughOut(t/s): %d",
-					threadNums[p], buyAvgTime, refundAvgTime, inquiryAvgTime, t));
+					"ThreadNum: %d BuyAvgTime(ns): %d RefundAvgTime(ns): %d InquiryAvgTime(ns): %d ThroughOut(t/s): %d Time(s): %d",
+					threadNums[p], buyAvgTime, refundAvgTime, inquiryAvgTime, t, time));
 			clear();
 		}
 	}
