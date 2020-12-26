@@ -1,8 +1,5 @@
 package ticketingsystem;
 
-// import java.util.concurrent.atomic.AtomicInteger;
-// import java.util.concurrent.atomic.AtomicLong;
-
 import java.util.concurrent.locks.ReentrantLock;
 
 public class TicketingDS implements TicketingSystem {
@@ -44,14 +41,10 @@ public class TicketingDS implements TicketingSystem {
 		ticket.route = route;
 		ticket.departure = departure;
 		ticket.arrival = arrival;
-
-		// reentrantLock[route].lock();
 		int curHash = hashDistance[departure][arrival];
 
 		for(int i=1;i<=coachnum; ++i) {
 			for(int j=1;j<=seatnum;++j) {
-				
-				
 				if((seats[route][i][j] & curHash) == 0) {
 					reentrantLock[route].lock();
 					int oldHash = seats[route][i][j];
@@ -87,7 +80,6 @@ public class TicketingDS implements TicketingSystem {
 				}
 			}
 		}
-		// reentrantLock[route].unlock();
 		
 		return null;
 	}
@@ -133,7 +125,6 @@ public class TicketingDS implements TicketingSystem {
 			}
 			r--;
 
-			// reentrantLock[route].lock();
 			if(l < ticket.departure) {
 				remainTicketNum[route][l][ticket.departure]--;
 			}
