@@ -51,37 +51,40 @@ public class TicketingDS implements TicketingSystem {
 		for(int i=1;i<=coachnum; ++i) {
 			for(int j=1;j<=seatnum;++j) {
 				
-				reentrantLock[route].lock();
-				int oldHash = seats[route][i][j];
-				if((oldHash & curHash) == 0) {
-					seats[route][i][j] = oldHash | curHash;
-					ticket.tid = ++totTid;
-					int l;
-					for(l=departure-1;l>=1;--l) {
-						if((oldHash & hashDistance[l][l+1]) != 0) {
-							break;
+				
+				if((seats[route][i][j] & curHash) == 0) {
+					reentrantLock[route].lock();
+					int oldHash = seats[route][i][j];
+					if((oldHash & curHash) == 0) {
+						seats[route][i][j] = oldHash | curHash;
+						ticket.tid = ++totTid;
+						int l;
+						for(l=departure-1;l>=1;--l) {
+							if((oldHash & hashDistance[l][l+1]) != 0) {
+								break;
+							}
 						}
-					}
-					l++;
-					int r;
-					for(r=arrival+1;r<=sationnum;++r) {
-						if((oldHash & hashDistance[r-1][r]) != 0) {
-							break;
+						l++;
+						int r;
+						for(r=arrival+1;r<=sationnum;++r) {
+							if((oldHash & hashDistance[r-1][r]) != 0) {
+								break;
+							}
 						}
-					}
-					r--;
-					if(l < departure)
-						remainTicketNum[route][l][departure]++;
-					if(r > arrival) 
-						remainTicketNum[route][arrival][r]++;
-					remainTicketNum[route][l][r]--;
+						r--;
+						if(l < departure)
+							remainTicketNum[route][l][departure]++;
+						if(r > arrival) 
+							remainTicketNum[route][arrival][r]++;
+						remainTicketNum[route][l][r]--;
 
+						reentrantLock[route].unlock();
+						ticket.coach = i;
+						ticket.seat = j;
+						return ticket;
+					}
 					reentrantLock[route].unlock();
-					ticket.coach = i;
-					ticket.seat = j;
-					return ticket;
 				}
-				reentrantLock[route].unlock();
 			}
 		}
 		// reentrantLock[route].unlock();
