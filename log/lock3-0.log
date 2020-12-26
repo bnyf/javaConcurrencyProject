@@ -1,0 +1,6 @@
+ThreadNum: 4 BuyAvgTime(ns): 4720 RefundAvgTime(ns): 1370 InquiryAvgTime(ns): 1236 ThroughOut(t/s): 873000 Time(s): 458
+ThreadNum: 8 BuyAvgTime(ns): 7899 RefundAvgTime(ns): 1310 InquiryAvgTime(ns): 1312 ThroughOut(t/s): 1103000 Time(s): 725
+ThreadNum: 16 BuyAvgTime(ns): 11183 RefundAvgTime(ns): 3092 InquiryAvgTime(ns): 2654 ThroughOut(t/s): 2846000 Time(s): 562
+ThreadNum: 32 BuyAvgTime(ns): 7785 RefundAvgTime(ns): 5181 InquiryAvgTime(ns): 4406 ThroughOut(t/s): 4359000 Time(s): 734
+ThreadNum: 64 BuyAvgTime(ns): 17741 RefundAvgTime(ns): 16582 InquiryAvgTime(ns): 13016 ThroughOut(t/s): 4145000 Time(s): 1544
+ThreadNum: 128 BuyAvgTime(ns): 42913 RefundAvgTime(ns): 51663 InquiryAvgTime(ns): 39660 ThroughOut(t/s): 2976000 Time(s): 4301
