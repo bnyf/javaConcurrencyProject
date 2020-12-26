@@ -8,7 +8,7 @@ public class TicketingDS implements TicketingSystem {
 	private int[][][] seats;
 	private int[][][] remainTicketNum;
 	private final int[][] hashDistance;
-	private int totTid = 0;
+	private long totTid = 0;
 
 	private ReentrantLock[] reentrantLock;
 	public TicketingDS(int _routenum, int _coachnum, int _seatnum, int _sationnum, int _threadnum) {
