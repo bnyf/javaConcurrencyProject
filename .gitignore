@@ -5,3 +5,6 @@ bin
 [v|V]erify*
 [m|M]ytrace*
 [c|C]heck*
+.idea
+*iml
+zhou*

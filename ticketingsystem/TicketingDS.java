@@ -20,13 +20,14 @@ public class TicketingDS implements TicketingSystem {
 		seatnum = _seatnum;
 		sationnum = _sationnum;
 
-		reentrantLock = new ReentrantLock[routenum];
+		reentrantLock = new ReentrantLock[routenum + 1];
 		seats = new AtomicInteger[routenum + 1][coachnum + 1][seatnum + 1];
 		remainTicketNum = new int[routenum + 1][sationnum + 1][sationnum + 1];
-
+		
 		for(int i=1;i<=routenum;++i) {
 			
 			reentrantLock[i] = new ReentrantLock();
+
 			remainTicketNum[i][1][sationnum] = coachnum * seatnum;
 
 			for(int j=1;j<=coachnum;++j) {
@@ -38,7 +39,7 @@ public class TicketingDS implements TicketingSystem {
 
 		hashDistance = new int[sationnum + 1][sationnum + 1];
 		for(int i=1;i<sationnum;++i) {
-			for(int j=2;j<=sationnum;++j) {
+			for(int j=i+1;j<=sationnum;++j) {
 				hashDistance[i][j] = (1 << (j - 1)) - (1 << (i - 1));
 			}
 		}
@@ -51,30 +52,10 @@ public class TicketingDS implements TicketingSystem {
 		ticket.route = route;
 		ticket.departure = departure;
 		ticket.arrival = arrival;
-		int curHash = 0;
-		boolean flag = true;
 
 		reentrantLock[route].lock();
-		for(int i=departure;flag && i>=1;--i) {
-			for(int j=arrival;j<=sationnum;++j) {
-				if(remainTicketNum[route][i][j] > 0) {
-					remainTicketNum[route][i][j]--;
-					if(departure < i)
-						remainTicketNum[route][departure][i]++; 
-					if(arrival > j)
-						remainTicketNum[route][j][arrival]++; 
-					curHash = hashDistance[i][j];
-					flag = false;
-					break;
-				}
-			}
-		}
-		reentrantLock[route].unlock();
-		
-		if(flag)
-			return null;
-
-		for(int i=1; i<=coachnum; ++i) {
+		int curHash = hashDistance[departure][arrival];
+		for(int i=1;i<=coachnum; ++i) {
 			for(int j=1;j<=seatnum;++j) {
 				while(true) {
 					int oldHash = seats[route][i][j].get();
@@ -84,6 +65,29 @@ public class TicketingDS implements TicketingSystem {
 							ticket.tid = totTid.getAndIncrement();
 							ticket.coach = i;
 							ticket.seat = j;
+
+							int l;
+							for(l=departure-1;l>=1;--l) {
+								if((oldHash & hashDistance[l][l+1]) != 0) {
+									break;
+								}
+							}
+							l++;
+							int r;
+							for(r=arrival+1;r<=sationnum;++r) {
+								if((oldHash & hashDistance[r-1][r]) != 0) {
+									break;
+								}
+							}
+							r--;
+
+							if(l < departure)
+								remainTicketNum[route][l][departure]++;
+							if(r > arrival) 
+								remainTicketNum[route][arrival][r]++;
+							remainTicketNum[route][l][r]--;
+
+							reentrantLock[route].unlock();
 							return ticket;
 						}
 					}
@@ -93,6 +97,7 @@ public class TicketingDS implements TicketingSystem {
 				}
 			}
 		}
+		reentrantLock[route].unlock();
 		
 		return null;
 	}
@@ -100,7 +105,6 @@ public class TicketingDS implements TicketingSystem {
 	@Override
 	public int inquiry(int route, int departure, int arrival) {
 		int cnt = 0;
-
 		reentrantLock[route].lock();
 		for(int i=departure;i>=1;--i) {
 			for(int j=arrival;j<=sationnum;++j) {
@@ -108,7 +112,7 @@ public class TicketingDS implements TicketingSystem {
 			}
 		}
 		reentrantLock[route].unlock();
-		
+
 		return cnt;
 	}
 
@@ -118,48 +122,45 @@ public class TicketingDS implements TicketingSystem {
 		int coach = ticket.coach;
 		int seat = ticket.seat;
 		int route = ticket.route;
-
+		reentrantLock[route].lock();
 		while(true) {
 			int oldHash = seats[route][coach][seat].get();
-			if((oldHash & curHash) == curHash){
+			if((oldHash & curHash) == curHash) {
 				int newHash = oldHash & (~curHash);
 				if(seats[route][coach][seat].compareAndSet(oldHash, newHash)) {
-					int l = ticket.departure;
-					for(int i=ticket.departure-1;i>=1;--i) {
-						if((oldHash & hashDistance[i][i+1]) != 0) {
-							l = i;
-						}
-						else {
+
+					int l;
+					for(l=ticket.departure-1;l>=1;--l) {
+						if((oldHash & hashDistance[l][l+1]) != 0) {
 							break;
 						}
 					}
-					int r = ticket.arrival;
-					for(int i=ticket.arrival+1;i<=sationnum;++i) {
-						if((oldHash & hashDistance[i-1][i]) != 0) {
-							r = i;
-						}
-						else {
+					l++;
+
+					int r;
+					for(r=ticket.arrival+1;r<=sationnum;++r) {
+						if((oldHash & hashDistance[r-1][r]) != 0) {
 							break;
 						}
 					}
-					
-					reentrantLock[route].lock();
-					remainTicketNum[route][l][r]++;
+					r--;
+
 					if(l < ticket.departure) {
 						remainTicketNum[route][l][ticket.departure]--;
 					}
 					if(r > ticket.arrival) {
 						remainTicketNum[route][ticket.arrival][r]--;
 					}
-					reentrantLock[route].unlock();
+					remainTicketNum[route][l][r]++;
 
+					reentrantLock[route].unlock();
 					return true;
 				}
 			}
 			else {
+				reentrantLock[route].unlock();
 				return false;
 			}
 		}
-
 	}
 }
