@@ -12,8 +12,7 @@ public class TicketingDS implements TicketingSystem {
 	private AtomicLong totTid = new AtomicLong(0);
 
 	private ReentrantLock[] reentrantLock;
-	private ReentrantLock[] reentrantLock1;
-	// private ReentrantLock[][][] reentrantLock1;
+	private ReentrantLock[][][] reentrantLock1;
 
 	public TicketingDS(int _routenum, int _coachnum, int _seatnum, int _sationnum, int _threadnum) {
 		routenum = _routenum;
@@ -22,7 +21,7 @@ public class TicketingDS implements TicketingSystem {
 		sationnum = _sationnum;
 
 		reentrantLock = new ReentrantLock[routenum + 1];
-		// reentrantLock1 = new ReentrantLock[routenum + 1][sationnum + 1][sationnum + 1];
+		reentrantLock1 = new ReentrantLock[routenum + 1][sationnum + 1][sationnum + 1];
 		
 		seats = new int[routenum + 1][coachnum + 1][seatnum + 1];
 		remainTicketNum = new int[routenum + 1][sationnum + 1][sationnum + 1];
@@ -30,11 +29,11 @@ public class TicketingDS implements TicketingSystem {
 		for(int i=1;i<=routenum;++i) {
 			remainTicketNum[i][1][sationnum] = coachnum * seatnum;
 			reentrantLock[i] = new ReentrantLock();
-			// for(int j=1;j<sationnum;++j) {
-			// 	for(int k=i+1;k<=sationnum;++k) {
-			// 		reentrantLock1[i][j][k] = new ReentrantLock();
-			// 	}
-			// }
+			for(int j=1;j<sationnum;++j) {
+				for(int k=i+1;k<=sationnum;++k) {
+					reentrantLock1[i][j][k] = new ReentrantLock();
+				}
+			}
 		}
 
 		hashDistance = new int[sationnum + 1][sationnum + 1];
@@ -56,7 +55,7 @@ public class TicketingDS implements TicketingSystem {
 
 		for(int i=1;i<=coachnum; ++i) {
 			for(int j=1;j<=seatnum;++j) {
-				if((seats[route][i][j] & curHash) == 0) {
+				while((seats[route][i][j] & curHash) == 0) {
 					int tempHash = seats[route][i][j];
 					int l;
 					for(l=departure-1;l>=1;--l) {
@@ -74,6 +73,7 @@ public class TicketingDS implements TicketingSystem {
 					r--;
 
 					reentrantLock[route].lock();
+
 					int oldHash = seats[route][i][j];
 					if(oldHash == tempHash) {
 						seats[route][i][j] = oldHash | curHash;						
