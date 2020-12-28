@@ -11,6 +11,8 @@ public class TicketingDS implements TicketingSystem {
 	private long totTid = 0;
 
 	private ReentrantLock[] reentrantLock;
+	private ReentrantLock[] reentrantLock1;
+
 	public TicketingDS(int _routenum, int _coachnum, int _seatnum, int _sationnum, int _threadnum) {
 		routenum = _routenum;
 		coachnum = _coachnum;
@@ -18,12 +20,20 @@ public class TicketingDS implements TicketingSystem {
 		sationnum = _sationnum;
 
 		reentrantLock = new ReentrantLock[routenum + 1];
+		reentrantLock1 = new ReentrantLock[routenum + 1];
+		
 		seats = new int[routenum + 1][coachnum + 1][seatnum + 1];
 		remainTicketNum = new int[routenum + 1][sationnum + 1][sationnum + 1];
 		
 		for(int i=1;i<=routenum;++i) {
-			reentrantLock[i] = new ReentrantLock();
 			remainTicketNum[i][1][sationnum] = coachnum * seatnum;
+			reentrantLock[i] = new ReentrantLock();
+			reentrantLock1[i] = new ReentrantLock();
+
+			// for(int j=1;j<sationnum;++j) {
+			// 	for(int k=i+1;k<=sationnum;++k) {
+			// 	}
+			// }
 		}
 
 		hashDistance = new int[sationnum + 1][sationnum + 1];
@@ -65,11 +75,14 @@ public class TicketingDS implements TicketingSystem {
 							}
 						}
 						r--;
+						
+						reentrantLock1[route].lock();
 						if(l < departure)
 							remainTicketNum[route][l][departure]++;
 						if(r > arrival) 
 							remainTicketNum[route][arrival][r]++;
 						remainTicketNum[route][l][r]--;
+						reentrantLock1[route].unlock();
 
 						reentrantLock[route].unlock();
 						ticket.coach = i;
@@ -87,13 +100,13 @@ public class TicketingDS implements TicketingSystem {
 	@Override
 	public int inquiry(int route, int departure, int arrival) {
 		int cnt = 0;
-		reentrantLock[route].lock();
+		reentrantLock1[route].lock();
 		for(int i=departure;i>=1;--i) {
 			for(int j=arrival;j<=sationnum;++j) {
 				cnt += remainTicketNum[route][i][j];
 			}
 		}
-		reentrantLock[route].unlock();
+		reentrantLock1[route].unlock();
 
 		return cnt;
 	}
@@ -125,6 +138,7 @@ public class TicketingDS implements TicketingSystem {
 			}
 			r--;
 
+			reentrantLock1[route].lock();
 			if(l < ticket.departure) {
 				remainTicketNum[route][l][ticket.departure]--;
 			}
@@ -132,6 +146,7 @@ public class TicketingDS implements TicketingSystem {
 				remainTicketNum[route][ticket.arrival][r]--;
 			}
 			remainTicketNum[route][l][r]++;
+			reentrantLock1[route].unlock();
 
 			reentrantLock[route].unlock();
 			return true;
