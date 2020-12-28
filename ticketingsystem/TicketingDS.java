@@ -71,7 +71,8 @@ public class TicketingDS implements TicketingSystem {
 						}
 					}
 					r--;
-
+					
+					// seat 的修改和票数的修改必须要在一起
 					reentrantLock[route].lock();
 
 					int oldHash = seats[route][i][j];
