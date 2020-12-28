@@ -11,8 +11,8 @@ public class TicketingDS implements TicketingSystem {
 	private final int[][] hashDistance;
 	private AtomicLong totTid = new AtomicLong(0);
 
-	private ReentrantLock[] reentrantLock;
-	private ReentrantLock[][][] reentrantLock1;
+	private ReentrantLock[][][] seatsLock;
+	private ReentrantLock[][][] ticketLock;
 
 	public TicketingDS(int _routenum, int _coachnum, int _seatnum, int _sationnum, int _threadnum) {
 		routenum = _routenum;
@@ -20,18 +20,24 @@ public class TicketingDS implements TicketingSystem {
 		seatnum = _seatnum;
 		sationnum = _sationnum;
 
-		reentrantLock = new ReentrantLock[routenum + 1];
-		reentrantLock1 = new ReentrantLock[routenum + 1][sationnum + 1][sationnum + 1];
+		seatsLock = new ReentrantLock[routenum + 1][coachnum + 1][seatnum + 1];
+		ticketLock = new ReentrantLock[routenum + 1][sationnum + 1][sationnum + 1];
 		
 		seats = new int[routenum + 1][coachnum + 1][seatnum + 1];
 		remainTicketNum = new int[routenum + 1][sationnum + 1][sationnum + 1];
 		
 		for(int i=1;i<=routenum;++i) {
 			remainTicketNum[i][1][sationnum] = coachnum * seatnum;
-			reentrantLock[i] = new ReentrantLock();
+			
+			for(int j=1;j<=coachnum;++j) {
+				for(int k=1;k<=seatnum;++k) {
+					seatsLock[i][j][k] = new ReentrantLock();
+				}
+			}
+
 			for(int j=1;j<sationnum;++j) {
-				for(int k=i+1;k<=sationnum;++k) {
-					reentrantLock1[i][j][k] = new ReentrantLock();
+				for(int k=j+1;k<=sationnum;++k) {
+					ticketLock[i][j][k] = new ReentrantLock();
 				}
 			}
 		}
@@ -73,25 +79,38 @@ public class TicketingDS implements TicketingSystem {
 					r--;
 					
 					// seat 的修改和票数的修改必须要在一起
-					reentrantLock[route].lock();
+					seatsLock[route][i][j].lock();
+
 
 					int oldHash = seats[route][i][j];
 					if(oldHash == tempHash) {
 						seats[route][i][j] = oldHash | curHash;						
 
 						if(l < departure)
-							remainTicketNum[route][l][departure]++;
+							ticketLock[route][l][departure].lock();
+						ticketLock[route][l][r].lock();
 						if(r > arrival) 
-							remainTicketNum[route][arrival][r]++;
-						remainTicketNum[route][l][r]--;
-						reentrantLock[route].unlock();
+							ticketLock[route][arrival][r].lock();
 
+						if(l < departure) {
+							remainTicketNum[route][l][departure]++;
+							ticketLock[route][l][departure].unlock();
+						}
+						remainTicketNum[route][l][r]--;
+						ticketLock[route][l][r].unlock();
+						if(r > arrival) {
+							remainTicketNum[route][arrival][r]++;
+							ticketLock[route][arrival][r].unlock();
+						}
+
+
+						seatsLock[route][i][j].unlock();
 						ticket.coach = i;
 						ticket.seat = j;
 						ticket.tid = totTid.getAndIncrement();
 						return ticket;
 					}
-					reentrantLock[route].unlock();
+					seatsLock[route][i][j].unlock();
 				}
 			}
 		}
@@ -102,13 +121,20 @@ public class TicketingDS implements TicketingSystem {
 	@Override
 	public int inquiry(int route, int departure, int arrival) {
 		int cnt = 0;
-		reentrantLock[route].lock();
-		for(int i=departure;i>=1;--i) {
+		
+		for(int i=1;i<=departure;++i) {
 			for(int j=arrival;j<=sationnum;++j) {
-				cnt += remainTicketNum[route][i][j];
+				ticketLock[route][i][j].lock();
 			}
 		}
-		reentrantLock[route].unlock();
+
+		for(int i=1;i<=departure;++i) {
+			for(int j=arrival;j<=sationnum;++j) {
+				cnt += remainTicketNum[route][i][j];
+				ticketLock[route][i][j].unlock();
+			}
+		}
+
 
 		return cnt;
 	}
@@ -120,7 +146,7 @@ public class TicketingDS implements TicketingSystem {
 		int seat = ticket.seat;
 		int route = ticket.route;
 
-		reentrantLock[route].lock();
+		seatsLock[route][coach][seat].lock();
 		int oldHash = seats[route][coach][seat];
 		if((oldHash & curHash) == curHash) {
 			seats[route][coach][seat] = oldHash & (~curHash);
@@ -140,21 +166,30 @@ public class TicketingDS implements TicketingSystem {
 			}
 			r--;
 
-			// reentrantLock1[route].lock();
+
+			if(l < ticket.departure)
+				ticketLock[route][l][ticket.departure].lock();
+			ticketLock[route][l][r].lock();
+			if(r > ticket.arrival) 
+				ticketLock[route][ticket.arrival][r].lock();
+
 			if(l < ticket.departure) {
 				remainTicketNum[route][l][ticket.departure]--;
-			}
-			if(r > ticket.arrival) {
-				remainTicketNum[route][ticket.arrival][r]--;
+				ticketLock[route][l][ticket.departure].unlock();
 			}
 			remainTicketNum[route][l][r]++;
-			// reentrantLock1[route].unlock();
+			ticketLock[route][l][r].unlock();
+			if(r > ticket.arrival) {
+				remainTicketNum[route][ticket.arrival][r]--;
+				ticketLock[route][ticket.arrival][r].unlock();
+			}
 
-			reentrantLock[route].unlock();
+
+			seatsLock[route][coach][seat].unlock();
 			return true;
 		}
 
-		reentrantLock[route].unlock();
+		seatsLock[route][coach][seat].unlock();
 		return false;
 	}
 }
