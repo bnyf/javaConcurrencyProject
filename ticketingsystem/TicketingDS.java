@@ -97,7 +97,7 @@ public class TicketingDS implements TicketingSystem {
 						// if(r > arrival) 
 						// 	ticketLock[route][arrival][r].writeLock().lock();
 
-						ticketLock[i].writeLock().lock();
+						ticketLock[route].writeLock().lock();
 
 						if(l < departure) {
 							remainTicketNum[route][l][departure]++;
@@ -109,7 +109,7 @@ public class TicketingDS implements TicketingSystem {
 							remainTicketNum[route][arrival][r]++;
 							// ticketLock[route][arrival][r].writeLock().unlock();
 						}
-						ticketLock[i].writeLock().unlock();
+						ticketLock[route].writeLock().unlock();
 
 
 						seatsLock[route][i][j].unlock();
