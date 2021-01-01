@@ -48,6 +48,8 @@ public class TicketingDS implements TicketingSystem {
 
 	@Override
 	public Ticket buyTicket(String passenger, int route, int departure, int arrival) {
+		if(route < 1 || route > routenum || departure < 1 || departure > sationnum || arrival < 1 || arrival > sationnum)
+			return null;
 		Ticket ticket = new Ticket();
 		ticket.passenger = passenger;
 		ticket.route = route;
@@ -109,6 +111,9 @@ public class TicketingDS implements TicketingSystem {
 
 	@Override
 	public int inquiry(int route, int departure, int arrival) {
+		if(route < 1 || route > routenum || departure < 1 || departure > sationnum || arrival < 1 || arrival > sationnum)
+			return 0;
+		
 		int cnt = 0;
 		ticketLock[route].lock();
 
@@ -124,17 +129,25 @@ public class TicketingDS implements TicketingSystem {
 
 	@Override
 	public boolean refundTicket(Ticket ticket) {
-		int curHash = hashDistance[ticket.departure][ticket.arrival];
+		if(ticket == null)
+			return false;
 		int coach = ticket.coach;
 		int seat = ticket.seat;
 		int route = ticket.route;
+		int departure = ticket.departure;
+		int arrival = ticket.arrival;
 
+		if(route < 1 || route > routenum || departure < 1 || departure > sationnum || arrival < 1 || arrival > sationnum)
+			return false;
+
+		int curHash = hashDistance[departure][arrival];
+		
 		seatsLock[route][coach][seat].lock();
 		int oldHash = seats[route][coach][seat];
 		if((oldHash & curHash) == curHash) {
 			seats[route][coach][seat] = oldHash & (~curHash);
 			int l;
-			for(l=ticket.departure-1;l>=1;--l) {
+			for(l=departure-1;l>=1;--l) {
 				if((oldHash & hashDistance[l][l+1]) != 0) {
 					break;
 				}
@@ -142,7 +155,7 @@ public class TicketingDS implements TicketingSystem {
 			l++;
 
 			int r;
-			for(r=ticket.arrival+1;r<=sationnum;++r) {
+			for(r=arrival+1;r<=sationnum;++r) {
 				if((oldHash & hashDistance[r-1][r]) != 0) {
 					break;
 				}
