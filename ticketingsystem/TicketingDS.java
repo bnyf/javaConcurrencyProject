@@ -9,11 +9,11 @@ public class TicketingDS implements TicketingSystem {
 	final private int routenum, coachnum, seatnum, sationnum;
 	private int[][][] seats;
 	private int[][][] remainTicketNum;
+	private ConcurrentHashMap<Long, Ticket> allTickets = new ConcurrentHashMap<>();
 	private final int[][] hashDistance;
 	private AtomicLong totTid = new AtomicLong(0);
 	private ReentrantLock[][][] seatsLock;
 	private ReentrantLock[] ticketLock;
-	ConcurrentHashMap<Long, Ticket> allTickets = new ConcurrentHashMap<>();
 
 	public TicketingDS(int _routenum, int _coachnum, int _seatnum, int _sationnum, int _threadnum) {
 		routenum = _routenum;
@@ -75,7 +75,6 @@ public class TicketingDS implements TicketingSystem {
 					// seat 的修改和票数的修改必须要在一起
 					seatsLock[route][i][j].lock();
 
-
 					int oldHash = seats[route][i][j];
 					if(oldHash == tempHash) {
 						seats[route][i][j] = oldHash | curHash;						
@@ -89,7 +88,6 @@ public class TicketingDS implements TicketingSystem {
 							remainTicketNum[route][arrival][r]++;
 						}
 						ticketLock[route].unlock();
-
 
 						seatsLock[route][i][j].unlock();
 
@@ -120,7 +118,6 @@ public class TicketingDS implements TicketingSystem {
 		
 		int cnt = 0;
 		ticketLock[route].lock();
-
 		for(int i=1;i<=departure;++i) {
 			for(int j=arrival;j<=sationnum;++j) {
 				cnt += remainTicketNum[route][i][j];
