@@ -139,18 +139,20 @@ public class TicketingDS implements TicketingSystem {
 		if(oldTicket == null) {
 			return false;
 		}
-		if(!oldTicket.equals(ticket)) {
-			return false;
-		}
-		if(allTickets.remove(ticket.tid) == null) {
-			return false;
-		}
 		
 		int coach = ticket.coach;
 		int seat = ticket.seat;
 		int route = ticket.route;
 		int departure = ticket.departure;
 		int arrival = ticket.arrival;
+
+		if(!(oldTicket.arrival == arrival && oldTicket.coach == coach && oldTicket.departure == departure 
+		&& oldTicket.route == route && oldTicket.seat == seat && oldTicket.passenger.equals(ticket.passenger) )){
+			return false;
+		}
+		if(allTickets.remove(ticket.tid) == null) {
+			return false;
+		}
 
 		int curHash = hashDistance[departure][arrival];
 		
